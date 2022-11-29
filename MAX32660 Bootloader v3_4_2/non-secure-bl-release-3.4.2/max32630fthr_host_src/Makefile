@@ -1,0 +1,135 @@
+STACK_SIZE=0x30000
+HEAP_SIZE=0x30000
+
+PROJECT_PATH=$(realpath ./)
+PROJECT_NAME=$(shell basename $(realpath ./))
+PROJECT_BUILD_PATH=$(realpath BUILD/)
+PROJECT_TOOLS_PATH=$(realpath tools/)
+PROJECT_CONFIGS_PATH=$(realpath configs/)
+PROJECT_TOOLCHAIN=GCC_ARM
+PROJECT_SCM_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+PROJECT_SCM_HASH=$(shell git rev-parse HEAD)
+-include .config
+
+ALGO_DIR = Algorithms/
+DRIVERS_DIR = Drivers/
+INTERFACES_DIR = Interfaces/
+SCOMMS_DIR = $(INTERFACES_DIR)/SensorComm/
+DSINT_DIR = $(INTERFACES_DIR)/DeviceStudio/
+SSCOMMS_DIR = $(SCOMMS_DIR)/SmartSensorComm/
+SSINT_DIR = $(INTERFACES_DIR)/SmartSensor/
+PLATFORMS_DIR = Platforms/
+
+EXTERNAL_SOURCES += mbed-os
+EXTERNAL_SOURCES += $(DRIVERS_DIR)USBDevice
+PROJECT_SOURCES += $(wildcard *.cpp)
+PROJECT_SOURCES += $(wildcard *.h)
+PROJECT_SOURCES += $(SCOMMS_DIR)/SensorComm
+PROJECT_SOURCES += $(DSINT_DIR)
+PROJECT_SOURCES += $(DRIVERS_DIR)MaximSensor
+PROJECT_SOURCES += Utilities
+
+CONFIG_FLAGS += PLATFORM_MAX32630FTHR
+CONFIG_PLATFORM_NAME=MAX32630FTHR
+EXTERNAL_SOURCES += $(PLATFORMS_DIR)max32630fthr
+CONFIG_FLAGS += MAXIM_PLATFORM_NAME=\"$(CONFIG_MAXIM_PLATFORM_NAME)\"
+
+
+ifeq ($(CONFIG_ENABLE_LED_STATUS), y)
+CONFIG_FLAGS += ENABLE_LED_STATUS
+endif
+
+ifeq ($(CONFIG_ENABLE_EVENTSTATS), y)
+CONFIG_FLAGS += ENABLE_EVENTSTATS
+endif
+
+ifeq ($(CONFIG_BOOTLOADER_USES_MFIO), y)
+CONFIG_FLAGS += BOOTLOADER_USES_MFIO
+endif
+
+CONFIG_FLAGS += ENABLE_SMARTSENSOR
+PROJECT_SOURCES += $(SSINT_DIR)
+
+CONFIG_FLAGS += ENABLE_SS_BOOTLOADER
+PROJECT_SOURCES += $(SSCOMMS_DIR)SSBootloader
+
+ifeq ($(CONFIG_ASCII_COMM), y)
+CONFIG_FLAGS += ASCII_COMM
+endif
+
+ifeq ($(CONFIG_SHOW_DEBUG_MSGS), y)
+CONFIG_FLAGS += SHOW_DEBUG_MSGS
+endif
+ifeq ($(CONFIG_SHOW_INFO_MSGS), y)
+CONFIG_FLAGS += SHOW_INFO_MSGS
+endif
+
+ifeq ($(CONFIG_SSINTERFACE_USES_I2C), y)
+CONFIG_FLAGS += SSINTERFACE_USES_I2C
+endif
+ifeq ($(CONFIG_SSINTERFACE_USES_UART), y)
+CONFIG_FLAGS += SSINTERFACE_USES_UART
+endif
+ifeq ($(CONFIG_SSINTERFACE_USES_SPI), y)
+CONFIG_FLAGS += SSINTERFACE_USES_SPI
+endif
+
+ifeq ($(V), 1)
+BUILD_VERBOSE = -v
+endif
+
+SRC_ARGS += $(addprefix --source $(PROJECT_PATH)/, $(EXTERNAL_SOURCES))
+SRC_ARGS += $(addprefix --source $(PROJECT_PATH)/, $(PROJECT_SOURCES))
+CFG_ARGS = $(addprefix -D, $(CONFIG_FLAGS))
+
+$(info SELECTED_CONFIG=$(CONFIG_CONFIG_NAME))
+$(info CONFIG_PLATFORM_NAME=$(CONFIG_PLATFORM_NAME) CONFIG_MAXIM_PLATFORM_NAME=$(CONFIG_MAXIM_PLATFORM_NAME) CONFIG_FLAGS=$(CONFIG_FLAGS))
+$(info PROJECT_SOURCES=$(PROJECT_SOURCES))
+$(info EXTERNAL_SOURCES=$(EXTERNAL_SOURCES))
+
+
+## BEGIN MAKEFILE RULES ##
+all: pre_build
+	@if [ -f $(CONFIG_CONFIG_NAME) ]; then \
+		printf "NO CONFIG SELECTED!\n"; \
+		exit 1; \
+	fi;
+	@if [ ! -f .checkout ]; then \
+		$(MAKE) checkout ; \
+	fi;
+	mbed compile -t $(PROJECT_TOOLCHAIN) -m $(CONFIG_PLATFORM_NAME) -D__STACK_SIZE=$(STACK_SIZE) -D__HEAP_SIZE=$(HEAP_SIZE) $(BUILD_VERBOSE) $(CFG_ARGS) $(SRC_ARGS)
+debug_build:
+	mbed compile -t $(PROJECT_TOOLCHAIN) -m $(CONFIG_PLATFORM_NAME) -D__STACK_SIZE=$(STACK_SIZE) -D__HEAP_SIZE=$(HEAP_SIZE) $(BUILD_VERBOSE) $(CFG_ARGS) $(SRC_ARGS) --profile $(PROJECT_PATH)/debug_oldmbedos.json
+
+clean_build:
+	mbed compile -t $(PROJECT_TOOLCHAIN) -m $(CONFIG_PLATFORM_NAME) -D__STACK_SIZE=$(STACK_SIZE) -D__HEAP_SIZE=$(HEAP_SIZE) -c $(BUILD_VERBOSE) $(CFG_ARGS) $(SRC_ARGS)
+
+werror_build:
+	mbed compile -t $(PROJECT_TOOLCHAIN) -m $(CONFIG_PLATFORM_NAME) -D__STACK_SIZE=$(STACK_SIZE) -D__HEAP_SIZE=$(HEAP_SIZE) -c $(BUILD_VERBOSE) $(CFG_ARGS) $(SRC_ARGS) --profile $(PROJECT_PATH)/werror_build_profile.json
+
+clean:
+	rm -rf $(PROJECT_BUILD_PATH)
+
+co: checkout
+
+checkout:
+	@echo "Downloading libraries"
+	mbed deploy
+	@touch .$@
+
+doxygen:
+	mkdir -p $(PROJECT_BUILD_PATH)
+	export PROJECT_SOURCES="$(PROJECT_SOURCES)"; \
+	export PROJECT_SCM_HASH="$(PROJECT_SCM_HASH)"; \
+	doxygen doxygen.conf
+	start $(PROJECT_BUILD_PATH)/doc/html/index.html
+
+pre_build:
+	@echo "#ifndef __BUILD_VERSION_H__" > build_version.h
+	@echo "#define __BUILD_VERSION_H__" >> build_version.h
+	@echo "#define BUILD_SOURCE_BRANCH \"$(PROJECT_SCM_BRANCH)\"" >> build_version.h
+	@echo "#define BUILD_SOURCE_HASH \"$(PROJECT_SCM_HASH)\"" >> build_version.h
+	@echo "#endif" >> build_version.h
+
+## END MAKEFILE RULES ##
+

@@ -1,0 +1,3 @@
+Maxim Micros SDK (Windows) contains the v1.0.0 installed for the Windows Maxim toolchain. This is (as of 2022) the current toolchain to use.
+
+The Low Power ARM Micro SDK (Win) is the deprecated toolchain that we also use for the MAX32660, specifically because it bundles part of the tools for the bootloader. The new toolchain for some reason doesn't include it, so that's why it's here. The new toolchain is used though because it may or may not have better SDK code for the MAX32660.

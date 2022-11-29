@@ -1,0 +1,81 @@
+BOOTLOADER RELEASE NOTES
+
+Version 3.4.2
+-----------------------------------------------------------
+* I2C Slave Address can now be configured any value between 0x08 and 0x77.
+* I2C Slave Address configuration application example is added.
+
+
+Version 3.4.1
+-----------------------------------------------------------
+* CRC of boot configuration is checked to restore from corrupted memory state.
+* Hard SWD Lock functionality is added.
+* Documentation is updated.
+
+
+Version 3.4.0
+-----------------------------------------------------------
+* Link time optimizations are enabled
+* Interrupts are cleared and interfaces are reset before jumping application.
+* Partial page receiving feature is implemented for flashing applications.
+* Application length is checked for impossible values while downloading.
+* I2C Example is included.
+* Additional linker files are added for debugging purposes.
+* Soft UART related warnings are resolved.
+
+Version 3.3.1
+-----------------------------------------------------------
+* Bug of flashing an application to last page has been fixed.
+
+Version 3.3.0
+-----------------------------------------------------------
+* Hardware UART is replaced with Software UART.
+* UART Pins are changed to Pin0_8 for Tx and Pin0_9 for Rx.
+* Bootloader start delay is moved after CRC check and delay is not used if CRC took too much time.
+
+Version 3.2.1
+-----------------------------------------------------------
+* Interrupts are disabled before jumping to application.
+* SPI0 and UART1 Clocks are enabled to simulate a reset before jumping to application.
+* GPIO0 pins are resetted to initial state before jumping to application.
+* Missing copyright information is added to source files.
+
+Version 3.2.0
+-----------------------------------------------------------
+* SPI support added to bootloader
+* UART, I2C and SPI interfaces are enabled simultaneously
+* Bootloader configuration parameters are updated and can be configurable by using configure_bootloader.py
+* For more details about interface pins and bootloader configurations, check Bootloader User Guide.
+
+Version 3.1.12
+-----------------------------------------------------------
+* UART support added to bootloader
+* Use max32630fthr-host_i2c.bin and select EvKit_V1 from .config file to use I2c bootloader 
+* Use max32630fthr-host_uart.bin and select EvKit_V1_Uart_BL from .config file to use UART bootloader 
+* UART port for UART bootloader is selected as UART1, it can be changed at config/EvKit_V1_Uart_BL.
+* When using download_fw_over_host, set delay factor as 2 by adding -d 2. As below:
+	python ./download_fw_over_i2c_host.py -f "hello_world.msbl" -p "COM1" -d 2
+* Please do not use -m flag with download_fw_over_host.py script
+
+Version 3.1.9
+-----------------------------------------------------------
+* Add python based downloader script, version 0.2
+	- Downloader script and usage notes can be found in scripts/py directory
+* Various minor fixes and code optimizations
+* Toolchain version: gcc version 7.2.1 20170904
+
+Version 3.1.7
+---------------------------------------------------------------------------------
+* Optimized CRC32 calculation
+* Optimized CRC32 verification speed
+* Set programmable delay to 0 as a default. Default delay is 50ms at boot time.
+* Add board folder
+* Updated flash controller driver
+* Console is configured for MAXREFDES220 board in Hello World Example. It can be changed in Makefile.
+* Please do not use the last page(address range is 0x3E000~0x40000). It's reserved to store some configuration that is used by bootloader.
+
+Link
+- https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads
+
+
+

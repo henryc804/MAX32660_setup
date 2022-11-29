@@ -1,0 +1,25 @@
+TARGET=MAX32660
+BOARD=MAX32660_EvKit_V1
+BOOTLOADER_I2C=y
+
+FLOAT_ABI=softfp
+
+## Bootloader Configuration
+PROJ_CFLAGS += -DBL_TIME_OUT_VALUE=0 # 50 ms
+PROJ_CFLAGS += -DBL_TIME_OUT_TO_STAY_IN_BOOTLDR # Timeout is default to enter bootloader
+#PROJ_CFLAGS += -DBL_GPIO_TO_STAY_IN_BOOTLDR # GPIO is default to enter bootloader
+
+
+## Debug configuration
+#PROJ_CFLAGS += -DBOOTLOADER_DEBUG_MSG -DBOOTLOADER_BUILD_INFO
+#PROJ_CFLAGS += -DSWD_LOCK
+CONSOLE_UART=0 # Uart 0 in MAXREF220, Uart 1 in MAX32660 EvKit
+CONSOLE_BAUD=115200
+
+# Bootloader address and size configurations
+LINKER_SCRIPT=RELEASE
+#LINKER_SCRIPT=DEBUG
+
+# Stack and Heap configuration
+HEAP_SIZE=0x0003000
+STACK_SIZE=0x00010000
